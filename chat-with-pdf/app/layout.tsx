@@ -35,7 +35,7 @@ export default function RootLayout({
     <ClerkProvider>
     <html lang="en">
       <body
-        className="min-h-screen h-screen overflow-hidden"
+        className="min-h-screen h-screen overflow-hidden flex flex-col"
       >
         {children}
       </body>
