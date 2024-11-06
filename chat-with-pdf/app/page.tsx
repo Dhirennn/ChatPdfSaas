@@ -9,6 +9,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 
 
@@ -56,7 +57,7 @@ const features = [
 export default function Home() {
   return (
 
-    <main className="bg-gradient-to-bl from-white to-indigo-600 flex-1">
+    <main className="overflow-y-scroll bg-gradient-to-bl from-white to-indigo-600 flex-1">
 
       <div className="bg-white py-24 sm:py-32 rounded-md drop-shadow-xl m-2">
         <div className="flex flex-col justify-center items-center mx-auto max-w-7xl px-6 lg:px-8">
@@ -76,10 +77,29 @@ export default function Home() {
             <Link href="/dashboard">Get Started</Link>
           </Button>
 
+          <div className="relative overflow-hidden pt-16">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+              <Image
+                alt="App Screenshot"
+                src="https://i.ibb.co/9qt80NV/Screenshot-2024-11-06-193027.png"
+                width={2432}
+                height={1442}
+                className="mb-[-0%] rounded-xl shadow-2xl ring-1 ring-gray-900/10 mt-10"              
+              />
+              <div aria-hidden="true" className="relative">
+                <div className="absolute bottom-0 -inset-x-32 bg-gradient-to-t from-white/95 pt-[5%]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div>
+          
 
 
         </div>
+
+
       </div>
 
 
