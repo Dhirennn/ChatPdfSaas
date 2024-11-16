@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import {useDropzone} from 'react-dropzone'
 import { useCallback } from 'react'
 import { 
@@ -10,16 +10,47 @@ import {
     RocketIcon,
     SaveIcon 
     } from 'lucide-react'
+import useUpload from '@/hooks/useUpload'
+import { useRouter } from 'next/navigation'
 
 function FileUploader() {
 
+    // custom hooks
+    const { progress, status, fileId, handleUpload } = useUpload();
+
+    const router = useRouter();
+
+    useEffect(
+        () => {
+            if(fileId) {
+                router.push(`/dashboard/files/${fileId}`);
+            }
+
+
+        }, [fileId, router]
+    )
+
     // when a person drops a file, it triggers this onDrop function then we can do stuff with the files
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
         // Do something with the files
-        console.log(acceptedFiles)
+        const file = acceptedFiles[0]
+
+        if(file){
+            await handleUpload(file)
+        }
+        else {
+            // do nothing
+            // toast...
+        }
 
       }, [])
-      const {getRootProps, getInputProps, isDragActive, isFocused, isDragAccept} = useDropzone({onDrop})
+      const {getRootProps, getInputProps, isDragActive, isFocused, isDragAccept} = useDropzone({
+        onDrop,
+        maxFiles: 1,
+        accept: {
+            "application/pdf": [".pdf"]
+        }
+    })
 
 
   return (
