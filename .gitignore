@@ -1,1 +1,3 @@
 .vercel
+service_key.json
+firebase.ts
