@@ -44,7 +44,7 @@ function FileUploader() {
             // toast...
         }
 
-      }, [])
+      }, [handleUpload])
 
 
       const statusIcons: {
