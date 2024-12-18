@@ -9,7 +9,7 @@ import { useUser } from "@clerk/nextjs";
 import { collection, orderBy, query } from "firebase/firestore";
 import { db } from "@/firebase";
 import { askQuestion } from "@/actions/askQuestion";
-// import ChatMessage from "./ChatMessage";
+import ChatMessage from "./ChatMessage";
 // import { useToast } from "./ui/use-toast";
 
 
@@ -40,6 +40,12 @@ function Chat({ id }: { id: string }) {
         orderBy("createdAt", "asc")
       )
   );
+
+  useEffect(() => {
+    bottomOfChatRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   useEffect(() => {
     if (!snapshot) return;
@@ -98,7 +104,7 @@ function Chat({ id }: { id: string }) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-scroll">
+<div className="flex flex-col h-full overflow-scroll">
       {/* Chat contents */}
       <div className="flex-1 w-full">
         {/* chat messages... */}
@@ -109,19 +115,26 @@ function Chat({ id }: { id: string }) {
           </div>
         ) : (
           <div className="p-5">
+            {messages.length === 0 && (
+              <ChatMessage
+                key={"placeholder"}
+                message={{
+                  role: "ai",
+                  message: "Ask me anything about the document!",
+                  createdAt: new Date(),
+                }}
+              />
+            )}
 
             {messages.map((message, index) => (
-              <div
-                key={message.id}
-              >
-                <p>{message.message}</p>
-              </div>
+              <ChatMessage key={index} message={message} />
             ))}
 
             <div ref={bottomOfChatRef} />
           </div>
         )}
       </div>
+
 
       <form
         onSubmit={handleSubmit}
