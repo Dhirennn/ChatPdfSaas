@@ -3,22 +3,29 @@ import PdfView from "@/components/PdfView";
 import { adminDb } from "@/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
 
-async function ChatToFilePage({
-  params: { id },
-}: {
-  params: {
-    id: string;
-  };
-}) {
-  auth.protect();
+// Fix: Remove static typing of params in the function signature and await it
+async function ChatToFilePage({ params }: { params: Promise<{ id: string }> }) {
+  // Await `params` to get its properties
+  const { id } = await params;
+
+  // Authenticate the user
   const { userId } = await auth();
 
+  if (!userId) {
+    throw new Error("User not authenticated.");
+  }
+
+  // Fetch the file from the database
   const ref = await adminDb
     .collection("users")
-    .doc(userId!)
+    .doc(userId)
     .collection("files")
     .doc(id)
     .get();
+
+  if (!ref.exists) {
+    throw new Error("File not found.");
+  }
 
   const url = ref.data()?.downloadUrl;
 
@@ -38,4 +45,5 @@ async function ChatToFilePage({
     </div>
   );
 }
+
 export default ChatToFilePage;

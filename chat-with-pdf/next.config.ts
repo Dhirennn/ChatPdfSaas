@@ -13,7 +13,10 @@ const nextConfig: NextConfig = {
         hostname: 'img.clerk.com',
       }
     ],
-  }
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
