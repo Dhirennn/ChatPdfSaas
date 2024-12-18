@@ -85,6 +85,37 @@ function PricingPage() {
               Upgrade to Pro
             </Button>
 
+
+            {/* FEATURES LIST FOR PRO PLAN */}
+            <ul
+              role="list"
+              className="mt-8 space-y-3 text-sm leading-6 text-gray-600"
+            >
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                Store up to 20 Documents
+              </li>
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                Ability to Delete Documents
+              </li>
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                Up to 100 messages per document
+              </li>
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                Full Power AI Chat Functionality with Memory Recall
+              </li>
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                Advanced analytics
+              </li>
+              <li className="flex gap-x-3">
+                <CheckIcon className="h-6 w-5 flex-none text-indigo-600" />
+                24-hour support response time
+              </li>
+            </ul>
           </div>
 
 
