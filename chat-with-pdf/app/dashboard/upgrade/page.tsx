@@ -8,6 +8,7 @@ import { useTransition } from "react";
 import { useUser } from "@clerk/nextjs";
 import useSubscription from "@/hooks/useSubscription";
 import getStripe from '@/lib/stripe-js';
+import { createCheckoutSession } from '@/actions/createCheckoutSession';
 
 export type UserDetails = {
   email: string;
