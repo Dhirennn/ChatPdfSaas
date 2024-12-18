@@ -29,6 +29,9 @@ async function fetchMessagesFromDB(docId: string) {
   }
 
   console.log("--- Fetching chat history from the firestore database... ---");
+
+  const LIMIT = 6;
+
   // Get the last 6 messages from the chat history
   const chats = await adminDb
     .collection(`users`)
@@ -37,7 +40,7 @@ async function fetchMessagesFromDB(docId: string) {
     .doc(docId)
     .collection("chat")
     .orderBy("createdAt", "desc")
-    // .limit(LIMIT)
+    // .limit(LIMIT) // if want to limit the number of messages
     .get();
 
   const chatHistory = chats.docs.map((doc) =>
