@@ -103,6 +103,12 @@ function Chat({ id }: { id: string }) {
       <div className="flex-1 w-full">
         {/* Chat Messages */}
 
+        {messages.map((msg) => (
+          <div key={msg.id} className="flex flex-col space-y-2">
+            <p>{msg.message}</p>
+          </div>
+        ))}
+
       </div>
 
       <form
