@@ -13,7 +13,8 @@ export enum StatusText {
     UPLOADING = "Uploading file... please wait.",
     UPLOADED = "File successfully uploaded!",
     SAVING = "Saving file to database...",
-    GENERATING = "Generating vector embeddings, This will only take a few seconds..."
+    GENERATING = "Generating vector embeddings...",
+    PROCESSING_BATCHES = "Processing document in batches..."
 }
 
     export type Status = StatusText[keyof StatusText]; // generate type

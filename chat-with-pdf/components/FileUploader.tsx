@@ -8,7 +8,9 @@ import {
     CircleArrowDown,
     HammerIcon,
     RocketIcon,
-    SaveIcon 
+    SaveIcon,
+    Loader2Icon,
+    CpuIcon 
     } from 'lucide-react'
 import useUpload, { StatusText } from '@/hooks/useUpload'
 import { useRouter } from 'next/navigation'
@@ -51,14 +53,19 @@ function FileUploader() {
         [key in StatusText]: JSX.Element;
       } = {
         [StatusText.UPLOADING]: (
-          <RocketIcon className="h-20 w-20 text-indigo-600" />
+          <Loader2Icon className="h-20 w-20 text-indigo-600 animate-spin" />
         ),
         [StatusText.UPLOADED]: (
-          <CheckCircleIcon className="h-20 w-20 text-indigo-600" />
+          <CheckCircleIcon className="h-20 w-20 text-green-600" />
         ),
-        [StatusText.SAVING]: <SaveIcon className="h-20 w-20 text-indigo-600" />,
+        [StatusText.SAVING]: (
+          <SaveIcon className="h-20 w-20 text-indigo-600 animate-pulse" />
+        ),
         [StatusText.GENERATING]: (
-          <HammerIcon className="h-20 w-20 text-indigo-600 animate-bounce" />
+          <CpuIcon className="h-20 w-20 text-indigo-600 animate-pulse" />
+        ),
+        [StatusText.PROCESSING_BATCHES]: (
+          <Loader2Icon className="h-20 w-20 text-indigo-600 animate-spin" />
         ),
       };
 

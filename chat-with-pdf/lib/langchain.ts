@@ -13,6 +13,7 @@ import { PineconeConflictError } from "@pinecone-database/pinecone/dist/errors";
 import { Index, RecordMetadata } from "@pinecone-database/pinecone";
 import { adminDb } from "../firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
+import pLimit from 'p-limit';
 
 // Initialize the OpenAI model with API key and model name
 const model = new ChatOpenAI({
@@ -57,14 +58,10 @@ async function fetchMessagesFromDB(docId: string) {
   return chatHistory;
 }
 
-export async function generateDocs(docId: string) {
+export const generateDocs = async (docId: string) => {
   const { userId } = await auth();
+  if (!userId) throw new Error("User not found");
 
-  if (!userId) {
-    throw new Error("User not found");
-  }
-
-  console.log("--- Fetching the download URL from Firebase... ---");
   const firebaseRef = await adminDb
     .collection("users")
     .doc(userId)
@@ -73,33 +70,40 @@ export async function generateDocs(docId: string) {
     .get();
 
   const downloadUrl = firebaseRef.data()?.downloadUrl;
+  if (!downloadUrl) throw new Error("Download URL not found");
 
-  if (!downloadUrl) {
-    throw new Error("Download URL not found");
-  }
-
-  console.log(`--- Download URL fetched successfully: ${downloadUrl} ---`);
-
-  // Fetch the PDF from the specified URL
   const response = await fetch(downloadUrl);
-
-  // Load the PDF into a PDFDocument object
   const data = await response.blob();
 
-  // Load the PDF document from the specified path
-  console.log("--- Loading PDF document... ---");
+  // Load and split the PDF into smaller chunks
   const loader = new PDFLoader(data);
   const docs = await loader.load();
 
-  // Split the loaded document into smaller parts for easier processing
-  console.log("--- Splitting the document into smaller parts... ---");
-  const splitter = new RecursiveCharacterTextSplitter();
+  // Configure the text splitter for larger documents
+  const textSplitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 200,
+    chunkOverlap: 10,
+    separators: ["\n\n", "\n", ".", "!", "?", " ", ""],
+  });
 
-  const splitDocs = await splitter.splitDocuments(docs);
-  console.log(`--- Split into ${splitDocs.length} parts ---`);
+  const splitDocs = await textSplitter.splitDocuments(docs);
 
-  return splitDocs;
-}
+  // Batch process documents if they're too large
+  const BATCH_SIZE = 20;
+  const processedDocs = [];
+  
+  for (let i = 0; i < splitDocs.length; i += BATCH_SIZE) {
+    const batch = splitDocs.slice(i, i + BATCH_SIZE);
+    processedDocs.push(...batch);
+    
+    // Add a small delay between batches to prevent timeouts
+    if (i + BATCH_SIZE < splitDocs.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  return processedDocs;
+};
 
 async function namespaceExists(
   index: Index<RecordMetadata>,
@@ -111,51 +115,60 @@ async function namespaceExists(
 }
 
 export async function generateEmbeddingsInPineconeVectorStore(docId: string) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    throw new Error("User not found");
-  }
-
-  let pineconeVectorStore;
-
-  // Generate embeddings (numerical representations) for the split documents
   console.log("--- Generating embeddings... ---");
-  const embeddings = new OpenAIEmbeddings();
+  const embeddings = new OpenAIEmbeddings({
+    batchSize: 512, // Increase batch size for OpenAI embeddings
+    maxConcurrency: 5 // Limit concurrent requests
+  });
 
   const index = await pineconeClient.index(indexName);
   const namespaceAlreadyExists = await namespaceExists(index, docId);
 
-  if (namespaceAlreadyExists) {
-    console.log(
-      `--- Namespace ${docId} already exists, reusing existing embeddings... ---`
-    );
+  if (!namespaceAlreadyExists) {
+    const splitDocs = await generateDocs(docId);
+    
+    // Configure batch processing
+    const BATCH_SIZE = 20; // Reduced from 100
+    const CONCURRENT_BATCHES = 3; // Reduced from 20
+    const limit = pLimit(CONCURRENT_BATCHES);
+    
+    // Process documents in parallel batches
+    const batches = [];
+    for (let i = 0; i < splitDocs.length; i += BATCH_SIZE) {
+      const batch = splitDocs.slice(i, i + BATCH_SIZE);
+      
+      // Add each batch operation to our queue
+      batches.push(
+        limit(async () => {
+          console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(splitDocs.length / BATCH_SIZE)}`);
+          
+          await PineconeStore.fromDocuments(batch, embeddings, {
+            pineconeIndex: index,
+            namespace: docId,
+            textKey: 'text',
+          });
+          
+          // Small delay between batches to prevent rate limiting
+          await new Promise(resolve => setTimeout(resolve, 200));
+        })
+      );
+    }
 
-    pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+    // Wait for all batches to complete
+    await Promise.all(batches);
+
+    console.log("--- All embeddings generated successfully ---");
+
+    return new PineconeStore(embeddings, {
       pineconeIndex: index,
       namespace: docId,
     });
-
-    return pineconeVectorStore;
-  } else {
-    // If the namespace does not exist, download the PDF from firestore via the stored Download URL & generate the embeddings and store them in the Pinecone vector store
-    const splitDocs = await generateDocs(docId);
-
-    console.log(
-      `--- Storing the embeddings in namespace ${docId} in the ${indexName} Pinecone vector store... ---`
-    );
-
-    pineconeVectorStore = await PineconeStore.fromDocuments(
-      splitDocs,
-      embeddings,
-      {
-        pineconeIndex: index,
-        namespace: docId,
-      }
-    );
-
-    return pineconeVectorStore;
   }
+
+  return PineconeStore.fromExistingIndex(embeddings, {
+    pineconeIndex: index,
+    namespace: docId,
+  });
 }
 
 const generateLangchainCompletion = async (docId: string, question: string) => {
